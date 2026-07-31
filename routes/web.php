@@ -64,3 +64,15 @@ Route::delete(
     '/api/ui/components/{id}',
     [UIController::class, 'deleteComponent']
 )->name('component.delete');
+
+// Preview Component
+Route::get(
+    '/api/ui/components/{id}/preview',
+    [UIController::class, 'previewComponent']
+)->name('component.preview');
+
+// Duplicate Component
+Route::post(
+    '/api/ui/components/{id}/duplicate',
+    [UIController::class, 'duplicateComponent']
+)->name('component.duplicate');

@@ -1003,25 +1003,49 @@
 
                                 <div class="btn-group">
 
+                                    <!-- Preview -->
+
+                                    <button
+                                        class="btn btn-sm btn-primary"
+                                        onclick="previewComponent({{ $component->id }})"
+                                        title="Preview">
+
+                                        <i class="bi bi-eye"></i>
+
+                                    </button>
+
+                                    <!-- Duplicate -->
+
+                                    <button
+                                        class="btn btn-sm btn-info text-white"
+                                        onclick="duplicateComponent({{ $component->id }})"
+                                        title="Duplicate">
+
+                                        <i class="bi bi-files"></i>
+
+                                    </button>
+
+                                    <!-- Toggle -->
 
                                     <button
                                         class="btn btn-sm btn-warning"
-                                        onclick="toggleComponent({{ $component->id }})">
+                                        onclick="toggleComponent({{ $component->id }})"
+                                        title="Toggle">
 
                                         <i class="bi bi-arrow-repeat"></i>
 
                                     </button>
 
-
+                                    <!-- Delete -->
 
                                     <button
                                         class="btn btn-sm btn-danger"
-                                        onclick="deleteComponent({{ $component->id }})">
+                                        onclick="deleteComponent({{ $component->id }})"
+                                        title="Delete">
 
                                         <i class="bi bi-trash"></i>
 
                                     </button>
-
 
                                 </div>
 
@@ -1107,6 +1131,48 @@
 
             {{ $components->links('pagination::bootstrap-5') }}
 
+
+        </div>
+
+    </div>
+
+    <!-- Preview Modal -->
+
+    <div
+        class="modal fade"
+        id="previewModal"
+        tabindex="-1">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-eye"></i>
+
+                        Component Preview
+
+                    </h5>
+
+                    <button
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="previewContent">
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
@@ -1373,6 +1439,204 @@
             }
 
 
+
+        }
+
+        async function previewComponent(id) {
+
+            try {
+
+                let response = await fetch(`/api/ui/components/${id}/preview`);
+
+                let result = await response.json();
+
+                if (!result.success) {
+                    alert("Unable to load preview.");
+                    return;
+                }
+
+                let component = result.component;
+
+                let html = "";
+
+                switch (component.type) {
+
+                    case "header":
+
+                        html = `
+                    <div class="text-center">
+                        <h2>${component.properties.title ?? component.name}</h2>
+                        <p class="text-muted">
+                            ${component.properties.subtitle ?? ""}
+                        </p>
+                    </div>
+                `;
+
+                        break;
+
+                    case "card":
+
+                        html = `
+                    <div class="card shadow-sm">
+
+                        <div class="card-body">
+
+                            <h4>
+                                ${component.properties.title ?? component.name}
+                            </h4>
+
+                            <p>
+                                ${component.properties.content ?? ""}
+                            </p>
+
+                            ${
+                                component.properties.button_text
+                                ?
+                                `<button class="btn btn-primary">
+                                    ${component.properties.button_text}
+                                </button>`
+                                :
+                                ""
+                            }
+
+                        </div>
+
+                    </div>
+                `;
+
+                        break;
+
+                    case "button":
+
+                        html = `
+                    <button
+                        class="btn ${component.properties.variant ?? 'btn-primary'}">
+
+                        ${component.properties.text ?? "Button"}
+
+                    </button>
+                `;
+
+                        break;
+
+                    case "form":
+
+                        html = `
+                    <form>
+
+                        <h4>
+                            ${component.properties.title ?? "Form"}
+                        </h4>
+
+                        ${
+                            component.properties.fields
+                            ?
+                            component.properties.fields.map(field => `
+                                <div class="mb-3">
+
+                                    <label class="form-label">
+
+                                        ${field.label}
+
+                                    </label>
+
+                                    <input
+                                        type="${field.type}"
+                                        class="form-control"
+                                        placeholder="${field.placeholder ?? ''}">
+                                </div>
+                            `).join("")
+                            :
+                            ""
+                        }
+
+                        <button class="btn btn-success">
+
+                            Submit
+
+                        </button>
+
+                    </form>
+                `;
+
+                        break;
+
+                    default:
+
+                        html = `
+                    <pre>
+${JSON.stringify(component.properties, null, 4)}
+                    </pre>
+                `;
+                }
+
+                document.getElementById("previewContent").innerHTML = html;
+
+                new bootstrap.Modal(
+                    document.getElementById("previewModal")
+                ).show();
+
+            } catch (error) {
+
+                console.log(error);
+
+                alert("Preview failed.");
+
+            }
+
+        }
+
+        async function duplicateComponent(id) {
+
+            if (!confirm("Duplicate this component?")) {
+
+                return;
+
+            }
+
+            try {
+
+                let response = await fetch(
+
+                    `/api/ui/components/${id}/duplicate`,
+
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Accept": "application/json",
+
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+
+                        }
+
+                    }
+
+                );
+
+                let result = await response.json();
+
+                if (result.success) {
+
+                    alert(result.message);
+
+                    location.reload();
+
+                } else {
+
+                    alert("Duplicate failed.");
+
+                }
+
+            } catch (error) {
+
+                console.log(error);
+
+                alert("Server Error");
+
+            }
 
         }
     </script>
