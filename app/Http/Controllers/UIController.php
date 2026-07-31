@@ -170,6 +170,50 @@ class UIController extends Controller
     }
 
     /**
+     * Preview Component
+     */
+    public function previewComponent($id)
+    {
+        $component = UIComponent::findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'component' => [
+                'id' => $component->id,
+                'type' => $component->type,
+                'name' => $component->name,
+                'screen' => $component->screen,
+                'properties' => $component->properties,
+                'order' => $component->order,
+                'is_active' => $component->is_active,
+            ]
+        ]);
+    }
+
+    /**
+     * Duplicate Component
+     */
+    public function duplicateComponent($id)
+    {
+        $component = UIComponent::findOrFail($id);
+
+        $duplicate = UIComponent::create([
+            'type' => $component->type,
+            'name' => $component->name . ' Copy',
+            'properties' => $component->properties,
+            'screen' => $component->screen,
+            'order' => (UIComponent::where('screen', $component->screen)->max('order') ?? 0) + 1,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Component duplicated successfully.',
+            'component' => $duplicate,
+        ]);
+    }
+
+    /**
      * Export Components CSV
      */
     public function exportCSV()
