@@ -13,14 +13,14 @@ class UIComponentsSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks to avoid issues
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Disable foreign key checks if MySQL
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::statement('ALTER TABLE ui_components AUTO_INCREMENT = 1;');
+        }
 
         // Clear existing data using delete instead of truncate
         UIComponent::query()->delete();
-
-        // Reset auto increment
-        DB::statement('ALTER TABLE ui_components AUTO_INCREMENT = 1;');
 
         // Sample components for home screen
         $components = [
@@ -136,8 +136,10 @@ class UIComponentsSeeder extends Seeder
             UIComponent::create($component);
         }
 
-        // Re-enable foreign key checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        // Re-enable foreign key checks if MySQL
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         $this->command->info('UI Components seeded successfully!');
     }

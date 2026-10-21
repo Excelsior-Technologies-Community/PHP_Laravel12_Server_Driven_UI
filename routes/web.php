@@ -2,77 +2,69 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UIController;
+use App\Http\Controllers\UIStudioController;
+use App\Http\Controllers\UIExperimentController;
+use App\Http\Controllers\UITelemetryController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application.
-|
 */
 
-// Home Page
+// Home Redirect
 Route::get('/', function () {
     return redirect()->route('demo', ['screen' => 'home']);
 });
 
-// Demo Pages
+// Demo Multi-Device & Dynamic UI Page
 Route::get('/demo/{screen?}', [UIController::class, 'demo'])
     ->where('screen', 'home|profile|dashboard|settings')
     ->name('demo');
 
-// =========================
-// Admin Dashboard
-// =========================
+// ==========================================
+// Admin Suites
+// ==========================================
 
+// 1. Component Management Console
 Route::get('/admin', [UIController::class, 'admin'])->name('admin');
-Route::get(
-    '/admin/export',
-    [UIController::class, 'exportCSV']
-)->name('component.export');
+Route::get('/admin/export', [UIController::class, 'exportCSV'])->name('component.export');
 
-// =========================
-// Component APIs
-// =========================
+// 2. Live Drag-and-Drop Canvas & Multi-Device Studio
+Route::get('/admin/studio', [UIStudioController::class, 'index'])->name('admin.studio');
 
-// Get Components
-Route::get('/api/ui/components/{screen}', [UIController::class, 'getComponents'])
-    ->where('screen', 'home|profile|dashboard|settings')
-    ->name('components');
+// 3. A/B Testing & Dynamic Experimentation Studio
+Route::get('/admin/experiments', [UIExperimentController::class, 'index'])->name('admin.experiments');
+Route::post('/admin/experiments', [UIExperimentController::class, 'store'])->name('admin.experiments.store');
+Route::post('/admin/experiments/{id}/toggle', [UIExperimentController::class, 'toggle'])->name('admin.experiments.toggle');
+Route::delete('/admin/experiments/{id}', [UIExperimentController::class, 'destroy'])->name('admin.experiments.destroy');
 
-// Get Available Screens
-Route::get('/api/ui/screens', [UIController::class, 'getScreens'])
-    ->name('screens');
+// 4. SDUI Analytics Radar & Component CTR Heatmap
+Route::get('/admin/telemetry', [UITelemetryController::class, 'index'])->name('admin.telemetry');
+Route::post('/admin/telemetry/synthetic', [UITelemetryController::class, 'generateSynthetic'])->name('admin.telemetry.synthetic');
 
-// Create Component
-Route::post(
-    '/api/ui/components',
-    [UIController::class, 'createComponent']
-)->name('component.create');
+// ==========================================
+// Component & Telemetry APIs
+// ==========================================
 
+Route::prefix('api/ui')->group(function () {
+    // Get Server-Driven UI Components (Platform & Version Adaptive + A/B Resolver)
+    Route::get('/components/{screen}', [UIController::class, 'getComponents'])
+        ->where('screen', 'home|profile|dashboard|settings')
+        ->name('components');
 
-// Toggle Status
-Route::post(
-    '/api/ui/components/{id}/toggle',
-    [UIController::class, 'toggleComponent']
-)->name('component.toggle');
+    Route::get('/screens', [UIController::class, 'getScreens'])->name('screens');
 
+    // Component CRUD & Reordering
+    Route::post('/components', [UIController::class, 'createComponent'])->name('component.create');
+    Route::post('/components/reorder', [UIStudioController::class, 'reorder'])->name('component.reorder');
+    Route::put('/components/{id}', [UIStudioController::class, 'updateProperties'])->name('component.update');
+    Route::post('/components/{id}/toggle', [UIController::class, 'toggleComponent'])->name('component.toggle');
+    Route::delete('/components/{id}', [UIController::class, 'deleteComponent'])->name('component.delete');
+    Route::get('/components/{id}/preview', [UIController::class, 'previewComponent'])->name('component.preview');
+    Route::post('/components/{id}/duplicate', [UIController::class, 'duplicateComponent'])->name('component.duplicate');
 
-// Delete Component
-Route::delete(
-    '/api/ui/components/{id}',
-    [UIController::class, 'deleteComponent']
-)->name('component.delete');
-
-// Preview Component
-Route::get(
-    '/api/ui/components/{id}/preview',
-    [UIController::class, 'previewComponent']
-)->name('component.preview');
-
-// Duplicate Component
-Route::post(
-    '/api/ui/components/{id}/duplicate',
-    [UIController::class, 'duplicateComponent']
-)->name('component.duplicate');
+    // Telemetry & CTR Tracker
+    Route::post('/telemetry/impression', [UITelemetryController::class, 'logImpression'])->name('telemetry.impression');
+    Route::post('/telemetry/click', [UITelemetryController::class, 'logClick'])->name('telemetry.click');
+});
