@@ -9,18 +9,8 @@ class UIComponent extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'ui_components';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'type',
         'name',
@@ -28,17 +18,19 @@ class UIComponent extends Model
         'screen',
         'order',
         'is_active',
+        'platforms',
+        'min_version',
+        'max_version',
+        'variant',
+        'experiment_id',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'properties' => 'array',
+        'platforms' => 'array',
         'is_active' => 'boolean',
         'order' => 'integer',
+        'experiment_id' => 'integer',
     ];
 
     /**
@@ -58,10 +50,42 @@ class UIComponent extends Model
     }
 
     /**
+     * Scope a query to filter by target client platform (ios, android, web).
+     */
+    public function scopeForPlatform($query, ?string $platform)
+    {
+        if (!$platform || $platform === 'all') {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($platform) {
+            $q->whereNull('platforms')
+              ->orWhereJsonContains('platforms', 'all')
+              ->orWhereJsonContains('platforms', $platform);
+        });
+    }
+
+    /**
      * Scope a query to order components.
      */
     public function scopeOrdered($query)
     {
         return $query->orderBy('order')->orderBy('created_at');
+    }
+
+    /**
+     * Telemetry relation
+     */
+    public function telemetry()
+    {
+        return $this->hasMany(UITelemetry::class, 'component_id');
+    }
+
+    /**
+     * Experiment relation
+     */
+    public function experiment()
+    {
+        return $this->belongsTo(UIExperiment::class, 'experiment_id');
     }
 }

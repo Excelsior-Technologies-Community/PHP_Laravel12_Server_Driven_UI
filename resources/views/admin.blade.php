@@ -114,79 +114,38 @@
 
 
 <body>
+    @include('layouts.navigation')
 
-
-    <div class="container-fluid px-4 py-4">
-
+    <div class="container-fluid px-4 py-2">
 
         <!-- Header -->
-
-
         <div class="dashboard-header">
-
-
             <div class="d-flex justify-content-between align-items-center">
-
-
                 <div>
-
-
                     <h1 class="mb-2">
-
                         <i class="bi bi-window-stack"></i>
-
                         Server Driven UI Dashboard
-
                     </h1>
-
-
                     <p class="mb-0">
-
-                        Manage dynamic UI components from server
-
+                        Manage dynamic UI components, multi-device rules, A/B experiments, and telemetry metrics
                     </p>
-
-
                 </div>
 
-
-
-                <div>
-
-
-                    <a href="/"
-                        class="btn btn-light">
-
-                        <i class="bi bi-house"></i>
-
-                        Home
-
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.studio') }}" class="btn btn-warning fw-semibold">
+                        <i class="bi bi-palette-fill"></i> Canvas Studio
                     </a>
-
-
-                    <a href="{{ route('component.export') }}"
-                        class="btn btn-success ms-2">
-
-                        <i class="bi bi-file-earmark-spreadsheet"></i>
-
-                        Export CSV
-
+                    <a href="{{ route('admin.experiments') }}" class="btn btn-info text-white fw-semibold">
+                        <i class="bi bi-sliders"></i> A/B Testing
                     </a>
-
-
-                    <i class="bi bi-eye"></i>
-
-                    Demo
-
+                    <a href="{{ route('admin.telemetry') }}" class="btn btn-primary fw-semibold">
+                        <i class="bi bi-activity"></i> CTR Radar
                     </a>
-
-
+                    <a href="{{ route('component.export') }}" class="btn btn-success ms-1">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                    </a>
                 </div>
-
-
             </div>
-
-
         </div>
 
 
@@ -810,63 +769,16 @@
 
 
                     <thead class="table-light">
-
-
                         <tr>
-
-
-                            <th>
-
-                                ID
-
-                            </th>
-
-
-                            <th>
-
-                                Type
-
-                            </th>
-
-
-                            <th>
-
-                                Name
-
-                            </th>
-
-
-                            <th>
-
-                                Screen
-
-                            </th>
-
-
-                            <th>
-
-                                Properties
-
-                            </th>
-
-
-                            <th>
-
-                                Status
-
-                            </th>
-
-
-                            <th>
-
-                                Action
-
-                            </th>
-
-
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Name</th>
+                            <th>Screen</th>
+                            <th>Platforms</th>
+                            <th>Engagement CTR</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
-
-
                     </thead>
 
 
@@ -946,53 +858,31 @@
 
 
                             <td>
-
-
-                                <small>
-
-
-                                    {{ json_encode($component->properties) }}
-
-
-                                </small>
-
-
+                                @foreach($component->platforms ?? ['all'] as $plat)
+                                    <span class="badge bg-dark border border-secondary text-info me-1" style="font-size: 10px;">{{ strtoupper($plat) }}</span>
+                                @endforeach
+                                @if($component->min_version)
+                                    <div class="text-muted" style="font-size: 10px;">Min: v{{ $component->min_version }}</div>
+                                @endif
                             </td>
 
-
-
-
+                            <td>
+                                @php
+                                    $ctr = $component->metrics_ctr ?? 0;
+                                    $heatColor = $ctr >= 15 ? 'success' : ($ctr >= 5 ? 'warning' : 'danger');
+                                @endphp
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-{{ $heatColor }} px-2 py-1">{{ $ctr }}%</span>
+                                    <span class="small text-muted">({{ $component->metrics_clicks ?? 0 }}/{{ $component->metrics_impressions ?? 0 }})</span>
+                                </div>
+                            </td>
 
                             <td>
-
-
                                 @if($component->is_active)
-
-
-                                <span class="badge bg-success">
-
-
-                                    Active
-
-
-                                </span>
-
-
+                                    <span class="badge bg-success">Active</span>
                                 @else
-
-
-                                <span class="badge bg-danger">
-
-
-                                    Inactive
-
-
-                                </span>
-
-
+                                    <span class="badge bg-danger">Inactive</span>
                                 @endif
-
-
                             </td>
 
 

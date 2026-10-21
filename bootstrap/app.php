@@ -11,7 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'api/ui/*',
+            'api/ui/telemetry/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
